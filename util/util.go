@@ -95,6 +95,9 @@ func LoadCandleData(stockCode, stockNumber string) ([]service.Candle, error) {
 	var candles []service.Candle
 	for _, record := range records[1:] { // Skip header row
 		closeDate := record[0]
+		open, _ := strconv.ParseFloat(record[1], 64)
+		high, _ := strconv.ParseFloat(record[2], 64)
+		low, _ := strconv.ParseFloat(record[3], 64)
 		closePrice, err := strconv.ParseFloat(record[4], 64)
 		if err != nil {
 			pkginit.Logger.Warn("Invalid close price", zap.String("date", closeDate), zap.String("value", record[1]))
@@ -105,6 +108,9 @@ func LoadCandleData(stockCode, stockNumber string) ([]service.Candle, error) {
 
 		candles = append(candles, service.Candle{
 			Date:  closeDate,
+			Open:  open,
+			High:  high,
+			Low:   low,
 			Close: closePrice,
 		})
 	}

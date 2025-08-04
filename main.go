@@ -1,14 +1,12 @@
 package main
 
 import (
-	"encoding/csv"
 	"errors"
 	"fmt"
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 	"math"
 	"os"
-	"strconv"
 	"wolf_street/model"
 	"wolf_street/pkginit"
 	"wolf_street/service"
@@ -213,47 +211,6 @@ func StrategyRSIAndSMA() {
 	}
 }
 
-func StrategyRSIAndBolling() {
-	file, err := os.Open("./data_set/MNHLDG_data.csv")
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
-
-	reader := csv.NewReader(file)
-	records, _ := reader.ReadAll()
-
-	var candles []service.Candle
-	for _, record := range records[1:] {
-		closeDate := record[0]
-		closePrice, _ := strconv.ParseFloat(record[1], 64)
-
-		pkginit.Logger.Debug("calculateRSI",
-			zap.Any("closeDate", closeDate),
-			zap.Any("closePrice", closePrice),
-		)
-
-		candles = append(candles, service.Candle{
-			Date:  record[0],
-			Close: closePrice,
-		})
-	}
-
-	result := service.StrategyRSIBollinger(candles)
-
-	winRate := 0.0
-	if result.TotalTrades > 0 {
-		winRate = float64(result.WinningTrades) / float64(result.TotalTrades) * 100
-	}
-
-	pkginit.Logger.Debug("Backtest completed",
-		zap.Int("TotalTrades", result.TotalTrades),
-		zap.Int("WinningTrades", result.WinningTrades),
-		zap.Float64("WinRate", winRate),
-		zap.Float64("TotalReturn", result.TotalReturn*100),
-	)
-}
-
 func main() {
 	pkginit.InitLogger() // Init Logger
 
@@ -300,10 +257,13 @@ func main() {
 			}
 
 			// Step 4: Execute Strategy (Placeholder Logic)
-			var result service.Result
 			switch selectedStrategy.ID {
 			case 1:
-				result = service.StrategyRSIBollinger(candles)
+				err := service.StrategyScoringEngine(candles)
+				//result = service.StrategyRSIBollinger(candles)
+				if err != nil {
+					pkginit.Logger.Error("Strategy failed:", zap.Any("Strategy", selectedStrategy.Name), zap.Error(err))
+				}
 			case 2:
 				// result = service.StrategyMACross(candles)
 			default:
@@ -312,11 +272,6 @@ func main() {
 			}
 
 			// Placeholder result output
-			fmt.Printf("\nTotal Trades: %d | Win Rate: %.2f%% | Total Return: %.2f%%\n",
-				result.TotalTrades,
-				float64(result.WinningTrades)/float64(result.TotalTrades)*100,
-				result.TotalReturn*100,
-			)
 
 			return nil
 		},

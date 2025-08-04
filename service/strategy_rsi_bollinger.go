@@ -1,6 +1,12 @@
 package service
 
-func StrategyRSIBollinger(candles []Candle) Result {
+import (
+	"fmt"
+	"go.uber.org/zap"
+	"wolf_street/pkginit"
+)
+
+func StrategyRSIBollinger(candles []Candle) error {
 	prices := make([]float64, len(candles))
 	for i, c := range candles {
 		prices[i] = c.Close
@@ -33,6 +39,9 @@ func StrategyRSIBollinger(candles []Candle) Result {
 					SellPrice: prices[i],
 				})
 				holding = false
+
+				pkginit.Logger.Debug("StrategyRSIBollinger: ", zap.Any("trades", trades))
+
 			}
 		}
 	}
@@ -45,5 +54,11 @@ func StrategyRSIBollinger(candles []Candle) Result {
 		result.TotalReturn += (trade.SellPrice - trade.BuyPrice) / trade.BuyPrice
 	}
 
-	return result
+	fmt.Printf("\nTotal Trades: %d | Win Rate: %.2f%% | Total Return: %.2f%%\n",
+		result.TotalTrades,
+		float64(result.WinningTrades)/float64(result.TotalTrades)*100,
+		result.TotalReturn*100,
+	)
+
+	return nil
 }

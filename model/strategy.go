@@ -26,7 +26,10 @@ type Strategy struct {
 
 func GetAllStrategy() ([]Strategy, error) {
 	var Strategies = []Strategy{
-		{ID: 1, Name: "RSI + Bollinger Band", Category: "Mean Reversion", Description: "Combine RSI oversold/overbought with Bollinger Bands."},
+
+		{ID: 1, Name: "StrategyScoringEngine", Category: "StrategyScoringEngine", Description: "StrategyScoringEngine"},
+
+		//{ID: 1, Name: "RSI + Bollinger Band", Category: "Mean Reversion", Description: "Combine RSI oversold/overbought with Bollinger Bands."},
 		{ID: 2, Name: "MA Cross (Golden/Death Cross)", Category: "Trend Following", Description: "50-day MA crossing 200-day MA."},
 		{ID: 3, Name: "MACD Cross Strategy", Category: "Momentum", Description: "Trade on MACD line crossovers."},
 		{ID: 4, Name: "Breakout Momentum", Category: "Momentum", Description: "Trade breakout patterns with volume confirmation."},
