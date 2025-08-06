@@ -1,6 +1,9 @@
 package service
 
-import "fmt"
+import (
+	"fmt"
+	_const "wolf_street/const"
+)
 
 type ScoringEngine struct {
 	KC           KC
@@ -167,9 +170,9 @@ func (se *ScoringEngine) Score(index int) (score int, signals []string) {
 }
 
 func GenerateTradeSignal(score int) string {
-	if score >= 2 {
+	if score >= _const.TradeSignalBuyThreshold {
 		return "BUY"
-	} else if score <= -2 {
+	} else if score <= _const.TradeSignalSellThreshold {
 		return "SELL"
 	} else {
 		return "HOLD"
