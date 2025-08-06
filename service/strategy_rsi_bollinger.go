@@ -15,7 +15,7 @@ func StrategyRSIBollinger(candles []Candle) error {
 	rsi := CalculateRSI(prices, 14)
 	lowerBand, _ := CalculateBollinger(prices, 20)
 
-	var trades []Trade
+	var trades []Trading
 	holding := false
 	buyPrice := 0.0
 	buyDate := ""
@@ -32,7 +32,7 @@ func StrategyRSIBollinger(candles []Candle) error {
 		} else {
 			holdDays++
 			if rsi[i] > 50 || holdDays >= 3 {
-				trades = append(trades, Trade{
+				trades = append(trades, Trading{
 					BuyDate:   buyDate,
 					BuyPrice:  buyPrice,
 					SellDate:  candles[i].Date,

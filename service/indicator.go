@@ -2,7 +2,142 @@ package service
 
 import "math"
 
-/*  */
+func CalculateKeltnerChannel(highs, lows, closes []float64, period int) (upper, middle, lower []float64) {
+	n := len(closes)
+	upper = make([]float64, n)
+	middle = CalculateEMA(closes, period)
+	atr := CalculateATR(highs, lows, closes, period)
+
+	for i := 0; i < n; i++ {
+		upper[i] = middle[i] + 2*atr[i]
+		lower[i] = middle[i] - 2*atr[i]
+	}
+	return upper, middle, lower
+}
+
+func CalculateTDSequential(prices []float64) []int {
+	n := len(prices)
+	td := make([]int, n)
+	countUp := 0
+	countDown := 0
+
+	for i := 4; i < n; i++ {
+		if prices[i] > prices[i-4] {
+			countUp++
+			countDown = 0
+		} else if prices[i] < prices[i-4] {
+			countDown++
+			countUp = 0
+		} else {
+			// 无计数
+		}
+
+		if countUp == 9 {
+			td[i] = 9
+			countUp = 0
+		}
+		if countDown == 9 {
+			td[i] = -9
+			countDown = 0
+		}
+	}
+	return td
+}
+
+/*
+VWAP：价格上穿/下穿 VWAP 判定强弱势
+*/
+func CalculateVWAP(candles []Candle) []float64 {
+	n := len(candles)
+	vwap := make([]float64, n)
+	var cumulativePV, cumulativeVolume float64
+
+	for i := 0; i < n; i++ {
+		price := (candles[i].High + candles[i].Low + candles[i].Close) / 3
+		volume := 1.0 // 若无成交量数据，假设为1
+		cumulativePV += price * volume
+		cumulativeVolume += volume
+		vwap[i] = cumulativePV / cumulativeVolume
+	}
+	return vwap
+}
+
+/*
+ARBR > 120 判定为极强多头，
+ARBR < 80 判定为极弱空头
+*/
+func CalculateARBR(candles []Candle) ([]float64, []float64) {
+	n := len(candles)
+	AR := make([]float64, n)
+	BR := make([]float64, n)
+
+	for i := 1; i < n; i++ {
+		HO := candles[i].High - candles[i].Open
+		OL := candles[i].Open - candles[i].Low
+		HC := math.Abs(candles[i].High - candles[i-1].Close)
+		LC := math.Abs(candles[i-1].Close - candles[i].Low)
+		if OL != 0 {
+			AR[i] = HO / OL * 100
+		}
+		if LC != 0 {
+			BR[i] = HC / LC * 100
+		}
+	}
+	return AR, BR
+}
+
+/*
+CR：> 150 强多头确认
+CR：< 100 偏空头确认
+*/
+func CalculateCR(candles []Candle, period int) []float64 {
+	n := len(candles)
+	cr := make([]float64, n)
+
+	for i := period; i < n; i++ {
+		HMP := 0.0
+		LMP := 0.0
+		for j := i - period + 1; j <= i; j++ {
+			mp := (candles[j-1].High + candles[j-1].Low) / 2
+			HMP += math.Max(0, candles[j].High-mp)
+			LMP += math.Max(0, mp-candles[j].Low)
+		}
+		if LMP != 0 {
+			cr[i] = HMP / LMP * 100
+		}
+	}
+	return cr
+}
+
+// Ichimoku (基准线示例)
+/*
+Ichimoku：价格上穿/下穿基准线判定偏多/偏空
+*/
+func CalculateIchimokuBaseLine(highs, lows []float64, period int) []float64 {
+	n := len(highs)
+	baseLine := make([]float64, n)
+	for i := period - 1; i < n; i++ {
+		highest := highs[i-period+1]
+		lowest := lows[i-period+1]
+		for j := i - period + 1; j <= i; j++ {
+			if highs[j] > highest {
+				highest = highs[j]
+			}
+			if lows[j] < lowest {
+				lowest = lows[j]
+			}
+		}
+		baseLine[i] = (highest + lowest) / 2
+	}
+	return baseLine
+}
+
+/*
+KDJ 信号 :
+高位 (>80) 警惕回落，低位 (<20) 关注反弹：
+超过 80：股价高位，注意风险。
+低于 20：股价低位，可能反弹。
+*/
 func CalculateKDJ(highs, lows, closes []float64, period int) []KDJValue {
 	n := len(closes)
 	kdj := make([]KDJValue, n)
@@ -32,7 +167,14 @@ func CalculateKDJ(highs, lows, closes []float64, period int) []KDJValue {
 	return kdj
 }
 
-/*  */
+/*
+SAR 信号 :
+SAR 点在价格下方 = 上涨趋势（持有或买入）。
+SAR 点在价格上方 = 下跌趋势（持有空单或卖出）。
+SAR 点“翻转”位置时 = 趋势可能反转：
+价格下方变上方：卖出信号。
+价格上方变下方：买入信号。
+*/
 func CalculateSAR(highs, lows []float64, accelerationFactor float64, maxAccelerationFactor float64) []float64 {
 	n := len(highs)
 	sar := make([]float64, n)

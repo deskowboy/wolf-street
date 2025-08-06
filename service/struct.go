@@ -8,7 +8,7 @@ type Candle struct {
 	Close float64
 }
 
-type Trade struct {
+type Trading struct {
 	BuyDate   string
 	BuyPrice  float64
 	SellDate  string
@@ -16,8 +16,15 @@ type Trade struct {
 }
 
 type Result struct {
-	Trades        []Trade
+	Trades        []Trading
 	TotalTrades   int
 	WinningTrades int
 	TotalReturn   float64
+}
+
+type Trade struct {
+	Date   string
+	Signal string
+	Price  float64
+	PnL    float64
 }
