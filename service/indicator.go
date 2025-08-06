@@ -2,6 +2,82 @@ package service
 
 import "math"
 
+/*  */
+func CalculateKDJ(highs, lows, closes []float64, period int) []KDJValue {
+	n := len(closes)
+	kdj := make([]KDJValue, n)
+
+	var k, d float64 = 50, 50
+
+	for i := period - 1; i < n; i++ {
+		low := lows[i-period+1]
+		high := highs[i-period+1]
+		for j := i - period + 1; j <= i; j++ {
+			if lows[j] < low {
+				low = lows[j]
+			}
+			if highs[j] > high {
+				high = highs[j]
+			}
+		}
+
+		if high != low {
+			rsv := (closes[i] - low) / (high - low) * 100
+			k = k*2/3 + rsv/3
+			d = d*2/3 + k/3
+			jValue := 3*k - 2*d
+			kdj[i] = KDJValue{K: k, D: d, J: jValue}
+		}
+	}
+	return kdj
+}
+
+/*  */
+func CalculateSAR(highs, lows []float64, accelerationFactor float64, maxAccelerationFactor float64) []float64 {
+	n := len(highs)
+	sar := make([]float64, n)
+
+	isUptrend := true
+	af := accelerationFactor
+	highest := highs[0]
+	lowest := lows[0]
+
+	for i := 1; i < n; i++ {
+		if isUptrend {
+			sar[i] = sar[i-1] + af*(highest-sar[i-1])
+			if lows[i] < sar[i] {
+				isUptrend = false
+				sar[i] = highest
+				af = accelerationFactor
+				lowest = lows[i]
+			} else {
+				if highs[i] > highest {
+					highest = highs[i]
+					af = math.Min(af+accelerationFactor, maxAccelerationFactor)
+				}
+			}
+		} else {
+			sar[i] = sar[i-1] + af*(lowest-sar[i-1])
+			if highs[i] > sar[i] {
+				isUptrend = true
+				sar[i] = lowest
+				af = accelerationFactor
+				highest = highs[i]
+			} else {
+				if lows[i] < lowest {
+					lowest = lows[i]
+					af = math.Min(af+accelerationFactor, maxAccelerationFactor)
+				}
+			}
+		}
+	}
+	return sar
+}
+
+/*
+RSI < 30 → 超卖区，考虑买入
+RSI > 70 → 超买区，考虑卖出
+*/
 func CalculateRSI(prices []float64, period int) []float64 {
 	rsi := make([]float64, len(prices))
 	var gainSum, lossSum float64
@@ -50,6 +126,10 @@ func CalculateRSI(prices []float64, period int) []float64 {
 	return rsi
 }
 
+/*
+价格下穿布林带下轨，考虑买入
+价格上穿布林带上轨，考虑卖出
+*/
 func CalculateBollinger(prices []float64, period int) (lowerBand, upperBand []float64) {
 	n := len(prices)
 	lowerBand = make([]float64, n)
@@ -81,6 +161,10 @@ func CalculateBollinger(prices []float64, period int) (lowerBand, upperBand []fl
 	return
 }
 
+/*
+短期EMA上穿长期EMA → 黄金交叉，买入信号
+短期EMA下穿长期EMA → 死亡交叉，卖出信号
+*/
 func CalculateEMA(prices []float64, period int) []float64 {
 	ema := make([]float64, len(prices))
 	k := 2.0 / (float64(period) + 1.0)
@@ -99,6 +183,10 @@ func CalculateEMA(prices []float64, period int) []float64 {
 	return ema
 }
 
+/*
+MACD线上穿Signal线 → 金叉，买入信号
+MACD线下穿Signal线 → 死叉，卖出信号
+*/
 func CalculateMACD(prices []float64) (macdLine, signalLine, histogram []float64) {
 	ema12 := CalculateEMA(prices, 12)
 	ema26 := CalculateEMA(prices, 26)
@@ -120,6 +208,10 @@ func CalculateMACD(prices []float64) (macdLine, signalLine, histogram []float64)
 	return
 }
 
+/*
+ATR上升，信号可靠性增强 (不直接作为买卖信号)
+ATR下降，信号减弱 (辅助判断信号有效性)
+*/
 func CalculateATR(highs, lows, closes []float64, period int) []float64 {
 	atr := make([]float64, len(closes))
 	trs := make([]float64, len(closes))
@@ -144,4 +236,70 @@ func CalculateATR(highs, lows, closes []float64, period int) []float64 {
 	}
 
 	return atr
+}
+
+/*
+StochRSI < 0.2 → 超卖 → 可能买入
+StochRSI > 0.8 → 超买 → 可能卖出
+*/
+func CalculateStochRSI(prices []float64, period int) []float64 {
+	rsi := CalculateRSI(prices, period)
+	stochRsi := make([]float64, len(rsi))
+
+	for i := period; i < len(rsi); i++ {
+		lowest := rsi[i-period]
+		highest := rsi[i-period]
+		for j := i - period + 1; j <= i; j++ {
+			if rsi[j] < lowest {
+				lowest = rsi[j]
+			}
+			if rsi[j] > highest {
+				highest = rsi[j]
+			}
+		}
+		if highest-lowest == 0 {
+			stochRsi[i] = 0
+		} else {
+			stochRsi[i] = (rsi[i] - lowest) / (highest - lowest)
+		}
+	}
+	return stochRsi
+}
+
+/*
+CCI > +100 → 多头强势（买入）
+CCI < -100 → 空头强势（卖出）
+*/
+func CalculateCCI(highs, lows, closes []float64, period int) []float64 {
+	n := len(closes)
+	cci := make([]float64, n)
+
+	for i := period - 1; i < n; i++ {
+		typicalPrices := []float64{}
+		for j := i - period + 1; j <= i; j++ {
+			typicalPrice := (highs[j] + lows[j] + closes[j]) / 3
+			typicalPrices = append(typicalPrices, typicalPrice)
+		}
+
+		sum := 0.0
+		for _, tp := range typicalPrices {
+			sum += tp
+		}
+		meanTP := sum / float64(period)
+
+		meanDeviation := 0.0
+		for _, tp := range typicalPrices {
+			meanDeviation += math.Abs(tp - meanTP)
+		}
+		meanDeviation /= float64(period)
+
+		currentTP := (highs[i] + lows[i] + closes[i]) / 3
+		if meanDeviation != 0 {
+			cci[i] = (currentTP - meanTP) / (0.015 * meanDeviation)
+		} else {
+			cci[i] = 0
+		}
+	}
+
+	return cci
 }

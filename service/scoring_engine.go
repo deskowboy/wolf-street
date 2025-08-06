@@ -3,8 +3,18 @@ package service
 import "fmt"
 
 // --- 打分引擎 (Scoring Engine) ---
+type KDJValue struct {
+	K float64
+	D float64
+	J float64
+}
+
 type ScoringEngine struct {
 	RSI        []float64
+	StochRSI   []float64
+	CCI        []float64
+	KDJ        []KDJValue
+	SAR        []float64
 	UpperBand  []float64
 	LowerBand  []float64
 	MACDLine   []float64
@@ -13,13 +23,15 @@ type ScoringEngine struct {
 	EMALong    []float64
 	ATR        []float64
 	Prices     []float64
+	Candles    []Candle
 }
 
 func (se *ScoringEngine) Score(index int) (score int, signals []string) {
 	score = 0
 	signals = []string{}
+	price := se.Prices[index]
 
-	// RSI 信号
+	// RSI
 	if se.RSI[index] < 30 {
 		score += 1
 		signals = append(signals, "RSI超卖")
@@ -28,17 +40,52 @@ func (se *ScoringEngine) Score(index int) (score int, signals []string) {
 		signals = append(signals, "RSI超买")
 	}
 
-	// 布林带信号
-	price := se.Prices[index]
-	if price < se.LowerBand[index] {
+	// StochRSI
+	if se.StochRSI[index] < 0.2 {
 		score += 1
-		signals = append(signals, "价格穿破布林下轨")
-	} else if price > se.UpperBand[index] {
+		signals = append(signals, "StochRSI超卖")
+	} else if se.StochRSI[index] > 0.8 {
 		score -= 1
-		signals = append(signals, "价格穿破布林上轨")
+		signals = append(signals, "StochRSI超买")
 	}
 
-	// MACD 信号
+	// CCI
+	if se.CCI[index] > 100 {
+		score += 1
+		signals = append(signals, "CCI强多头")
+	} else if se.CCI[index] < -100 {
+		score -= 1
+		signals = append(signals, "CCI强空头")
+	}
+
+	// KDJ
+	if se.KDJ[index].J > 80 {
+		score -= 1
+		signals = append(signals, "KDJ超买")
+	} else if se.KDJ[index].J < 20 {
+		score += 1
+		signals = append(signals, "KDJ超卖")
+	}
+
+	// Bollinger Bands
+	if price < se.LowerBand[index] {
+		score += 1
+		signals = append(signals, "布林带下轨突破")
+	} else if price > se.UpperBand[index] {
+		score -= 1
+		signals = append(signals, "布林带上轨突破")
+	}
+
+	// EMA
+	if se.EMAShort[index] > se.EMALong[index] {
+		score += 1
+		signals = append(signals, "EMA金叉")
+	} else if se.EMAShort[index] < se.EMALong[index] {
+		score -= 1
+		signals = append(signals, "EMA死叉")
+	}
+
+	// MACD
 	if index > 0 {
 		if se.MACDLine[index-1] < se.SignalLine[index-1] && se.MACDLine[index] > se.SignalLine[index] {
 			score += 1
@@ -49,16 +96,16 @@ func (se *ScoringEngine) Score(index int) (score int, signals []string) {
 		}
 	}
 
-	// EMA排列信号
-	if se.EMAShort[index] > se.EMALong[index] {
+	// SAR 反转信号
+	if price > se.SAR[index] {
 		score += 1
-		signals = append(signals, "短期EMA上穿长期EMA")
-	} else {
+		signals = append(signals, "SAR支撑")
+	} else if price < se.SAR[index] {
 		score -= 1
-		signals = append(signals, "短期EMA下穿长期EMA")
+		signals = append(signals, "SAR压制")
 	}
 
-	// ATR (波动辅助判断)
+	// ATR 辅助
 	if index > 0 && se.ATR[index] > se.ATR[index-1] {
 		signals = append(signals, "ATR上升")
 	} else if index > 0 && se.ATR[index] < se.ATR[index-1] {
@@ -66,6 +113,16 @@ func (se *ScoringEngine) Score(index int) (score int, signals []string) {
 	}
 
 	return
+}
+
+func GenerateTradeSignal(score int) string {
+	if score >= 2 {
+		return "BUY"
+	} else if score <= -2 {
+		return "SELL"
+	} else {
+		return "HOLD"
+	}
 }
 
 func StrategyScoringEngine(candles []Candle) error {
@@ -78,17 +135,23 @@ func StrategyScoringEngine(candles []Candle) error {
 	}
 	prices := closes
 
-	// 计算各类指标
 	rsi := CalculateRSI(prices, 14)
+	stochRsi := CalculateStochRSI(prices, 14)
+	cci := CalculateCCI(highs, lows, closes, 20)
+	kdj := CalculateKDJ(highs, lows, closes, 9)
+	sar := CalculateSAR(highs, lows, 0.02, 0.2)
 	lowerBand, upperBand := CalculateBollinger(prices, 20)
 	emaShort := CalculateEMA(prices, 12)
 	emaLong := CalculateEMA(prices, 26)
 	macdLine, signalLine, _ := CalculateMACD(prices)
 	atr := CalculateATR(highs, lows, closes, 14)
 
-	// 初始化 Scoring Engine
 	se := ScoringEngine{
 		RSI:        rsi,
+		StochRSI:   stochRsi,
+		CCI:        cci,
+		KDJ:        kdj,
+		SAR:        sar,
 		UpperBand:  upperBand,
 		LowerBand:  lowerBand,
 		MACDLine:   macdLine,
@@ -97,20 +160,15 @@ func StrategyScoringEngine(candles []Candle) error {
 		EMALong:    emaLong,
 		ATR:        atr,
 		Prices:     closes,
+		Candles:    candles,
 	}
-
-	// 逐个时间点评分
-	var scores []int
-	var allSignals [][]string
 
 	for i := 0; i < len(prices); i++ {
 		score, signals := se.Score(i)
-		scores = append(scores, score)
-		allSignals = append(allSignals, signals)
-		if len(signals) > 0 {
-			fmt.Printf(" (%d.) %s : %f : Score = %d, Signals = %v\n", i, candles[i].Date, candles[i].Close, score, signals)
+		if i < 10 {
+			tradeSignal := GenerateTradeSignal(score)
+			fmt.Printf(" (%d.) %s = $ %f | Score: %d, tradeSignal: %s , Signals: %v\n", i+1, candles[i].Date, candles[i].Close, score, tradeSignal, signals)
 		}
 	}
-
 	return nil
 }

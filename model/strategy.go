@@ -28,18 +28,17 @@ func GetAllStrategy() ([]Strategy, error) {
 	var Strategies = []Strategy{
 
 		{ID: 1, Name: "StrategyScoringEngine", Category: "StrategyScoringEngine", Description: "StrategyScoringEngine"},
-
-		//{ID: 1, Name: "RSI + Bollinger Band", Category: "Mean Reversion", Description: "Combine RSI oversold/overbought with Bollinger Bands."},
-		{ID: 2, Name: "MA Cross (Golden/Death Cross)", Category: "Trend Following", Description: "50-day MA crossing 200-day MA."},
-		{ID: 3, Name: "MACD Cross Strategy", Category: "Momentum", Description: "Trade on MACD line crossovers."},
-		{ID: 4, Name: "Breakout Momentum", Category: "Momentum", Description: "Trade breakout patterns with volume confirmation."},
-		{ID: 5, Name: "Mean Reversion (Donchian Channel)", Category: "Mean Reversion", Description: "Price reverting to Donchian channel median."},
-		{ID: 6, Name: "Multi-Factor Scoring Model", Category: "Factor Investing", Description: "Composite score based on multiple factors."},
-		{ID: 7, Name: "Pairs Trading Arbitrage", Category: "Arbitrage", Description: "Statistical arbitrage with correlated pairs."},
-		{ID: 8, Name: "ML Predictive Strategy", Category: "AI/ML", Description: "Machine Learning based predictive models."},
-		{ID: 9, Name: "Composite Strategy Fusion", Category: "Hybrid", Description: "Fusion of multiple strategies dynamically."},
-		{ID: 10, Name: "Trend Following", Category: "Trend Following", Description: "Ride long-term up/down trends."},
-		{ID: 11, Name: "Momentum Strategy", Category: "Momentum", Description: "Ride short-term price momentum."},
+		{ID: 2, Name: "RSI + Bollinger Band", Category: "Mean Reversion", Description: "Combine RSI oversold/overbought with Bollinger Bands."},
+		//{ID: 3, Name: "MA Cross (Golden/Death Cross)", Category: "Trend Following", Description: "50-day MA crossing 200-day MA."},
+		//{ID: 4, Name: "MACD Cross Strategy", Category: "Momentum", Description: "Trade on MACD line crossovers."},
+		//{ID: 5, Name: "Breakout Momentum", Category: "Momentum", Description: "Trade breakout patterns with volume confirmation."},
+		//{ID: 6, Name: "Mean Reversion (Donchian Channel)", Category: "Mean Reversion", Description: "Price reverting to Donchian channel median."},
+		//{ID: 7, Name: "Multi-Factor Scoring Model", Category: "Factor Investing", Description: "Composite score based on multiple factors."},
+		//{ID: 8, Name: "Pairs Trading Arbitrage", Category: "Arbitrage", Description: "Statistical arbitrage with correlated pairs."},
+		//{ID: 9, Name: "ML Predictive Strategy", Category: "AI/ML", Description: "Machine Learning based predictive models."},
+		//{ID: 10, Name: "Composite Strategy Fusion", Category: "Hybrid", Description: "Fusion of multiple strategies dynamically."},
+		//{ID: 11, Name: "Trend Following", Category: "Trend Following", Description: "Ride long-term up/down trends."},
+		//{ID: 12, Name: "Momentum Strategy", Category: "Momentum", Description: "Ride short-term price momentum."},
 	}
 
 	return Strategies, nil

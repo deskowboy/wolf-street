@@ -252,6 +252,13 @@ func main() {
 					return err
 				}
 
+				if len(candles) == 0 {
+					return fmt.Errorf("candles 数据为空")
+				}
+				if len(candles) < 30 {
+					return fmt.Errorf("candles 数据不足, 至少需要30根K线")
+				}
+
 				// 成功加载Candle数据，退出循环
 				break
 			}

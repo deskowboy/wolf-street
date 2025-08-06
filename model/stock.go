@@ -21,6 +21,12 @@ func GetAllStock() ([]Stock, error) {
 			Number:      "7081",
 			Description: "R&D, manufacturing of generic pharmaceutical products",
 		},
+		{
+			Name:        "Zetrix AI Bhd",
+			Code:        "ZETRIX",
+			Number:      "0138",
+			Description: "myeg",
+		},
 	}
 
 	return Stocks, nil

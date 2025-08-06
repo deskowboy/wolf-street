@@ -1,1 +1,38 @@
-./data_set/*
+# Binaries
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Coverage files
+*.coverprofile
+
+# Dependency management
+vendor/
+
+# Workspace files
+go.work
+go.work.sum
+
+# Editor & OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Logs & Env
+*.log
+.env
+.env.*
+
+# Test caches
+*.testcache
+*.benchcache
+
+# Go module cache
+pkg/mod/
+
+data_set/*
