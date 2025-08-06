@@ -2,17 +2,23 @@ package service
 
 import "math"
 
-func CalculateKeltnerChannel(highs, lows, closes []float64, period int) (upper, middle, lower []float64) {
+func CalculateKeltnerChannel(highs, lows, closes []float64, period int) KC {
 	n := len(closes)
-	upper = make([]float64, n)
-	middle = CalculateEMA(closes, period)
+	upperBand := make([]float64, n)
+	middleBand := CalculateEMA(closes, period)
+	lowerBand := make([]float64, n)
 	atr := CalculateATR(highs, lows, closes, period)
 
 	for i := 0; i < n; i++ {
-		upper[i] = middle[i] + 2*atr[i]
-		lower[i] = middle[i] - 2*atr[i]
+		upperBand[i] = middleBand[i] + 2*atr[i]
+		lowerBand[i] = middleBand[i] - 2*atr[i]
 	}
-	return upper, middle, lower
+
+	return KC{
+		UpperBand:  upperBand,
+		MiddleBand: middleBand,
+		LowerBand:  lowerBand,
+	}
 }
 
 func CalculateTDSequential(prices []float64) []int {

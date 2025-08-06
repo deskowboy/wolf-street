@@ -55,3 +55,9 @@ type MACD struct {
 	SignalLine []float64
 	Histogram  []float64
 }
+
+type KC struct {
+	UpperBand  []float64
+	MiddleBand []float64
+	LowerBand  []float64
+}

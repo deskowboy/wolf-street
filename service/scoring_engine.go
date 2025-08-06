@@ -3,9 +3,7 @@ package service
 import "fmt"
 
 type ScoringEngine struct {
-	KCUpper      []float64
-	KCMiddle     []float64
-	KCLower      []float64
+	KC           KC
 	TDSequential []int
 	RSI          []float64
 	StochRSI     []float64
@@ -13,20 +11,16 @@ type ScoringEngine struct {
 	KDJ          []KDJValue
 	SAR          []float64
 	Bollinger    BollingerBand
-	//UpperBand    []float64
-	//LowerBand    []float64
-	//MACDLine   []float64
-	//SignalLine []float64
-	MACD     MACD
-	EMAShort []float64
-	EMALong  []float64
-	ATR      []float64
-	VWAP     []float64
-	ArBr     ARBR
-	CR       []float64
-	Ichimoku []float64
-	Prices   []float64
-	Candles  []Candle
+	MACD         MACD
+	EMAShort     []float64
+	EMALong      []float64
+	ATR          []float64
+	VWAP         []float64
+	ArBr         ARBR
+	CR           []float64
+	Ichimoku     []float64
+	Prices       []float64
+	Candles      []Candle
 }
 
 func (se *ScoringEngine) Score(index int) (score int, signals []string) {
@@ -152,13 +146,13 @@ func (se *ScoringEngine) Score(index int) (score int, signals []string) {
 	}
 
 	// Keltner Channel (KC)
-	//if price > se.KCUpper[index] {
-	//	score += 1
-	//	signals = append(signals, "价格突破Keltner上轨（趋势强势）")
-	//} else if price < se.KCLower[index] {
-	//	score -= 1
-	//	signals = append(signals, "价格跌破Keltner下轨（弱势）")
-	//}
+	if price > se.KC.UpperBand[index] {
+		score += 1
+		signals = append(signals, "价格突破Keltner上轨（趋势强势）")
+	} else if price < se.KC.LowerBand[index] {
+		score -= 1
+		signals = append(signals, "价格跌破Keltner下轨（弱势）")
+	}
 
 	// TD Sequential
 	if se.TDSequential[index] == 9 {
@@ -206,29 +200,27 @@ func StrategyScoringEngine(candles []Candle) error {
 	arbr := CalculateARBR(candles)
 	cr := CalculateCR(candles, 26)
 	ichimoku := CalculateIchimokuBaseLine(highs, lows, 26)
-	//kcUpper, kcMiddle, kcLower := CalculateKeltnerChannel(highs, lows, closes, 20)
+	kcband := CalculateKeltnerChannel(highs, lows, closes, 20)
 	tdSeq := CalculateTDSequential(closes)
 
 	se := ScoringEngine{
-		RSI:       rsi,
-		StochRSI:  stochRsi,
-		CCI:       cci,
-		KDJ:       kdj,
-		SAR:       sar,
-		Bollinger: bollinger,
-		MACD:      macd,
-		EMAShort:  emaShort,
-		EMALong:   emaLong,
-		ATR:       atr,
-		VWAP:      vwap,
-		Prices:    prices, // 必须加这个
-		Candles:   candles,
-		ArBr:      arbr,
-		CR:        cr,
-		Ichimoku:  ichimoku,
-		//KCUpper:      kcUpper,
-		//KCMiddle:     kcMiddle,
-		//KCLower:      kcLower,
+		RSI:          rsi,
+		StochRSI:     stochRsi,
+		CCI:          cci,
+		KDJ:          kdj,
+		SAR:          sar,
+		Bollinger:    bollinger,
+		MACD:         macd,
+		EMAShort:     emaShort,
+		EMALong:      emaLong,
+		ATR:          atr,
+		VWAP:         vwap,
+		Prices:       prices, // 必须加这个
+		Candles:      candles,
+		ArBr:         arbr,
+		CR:           cr,
+		Ichimoku:     ichimoku,
+		KC:           kcband,
 		TDSequential: tdSeq,
 		// 省略其他指标初始化
 	}
