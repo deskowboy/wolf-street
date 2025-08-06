@@ -66,7 +66,7 @@ func CalculateVWAP(candles []Candle) []float64 {
 ARBR > 120 判定为极强多头，
 ARBR < 80 判定为极弱空头
 */
-func CalculateARBR(candles []Candle) ([]float64, []float64) {
+func CalculateARBR(candles []Candle) ARBR {
 	n := len(candles)
 	AR := make([]float64, n)
 	BR := make([]float64, n)
@@ -83,7 +83,11 @@ func CalculateARBR(candles []Candle) ([]float64, []float64) {
 			BR[i] = HC / LC * 100
 		}
 	}
-	return AR, BR
+
+	return ARBR{
+		AR: AR,
+		BR: BR,
+	}
 }
 
 /*
@@ -272,35 +276,34 @@ func CalculateRSI(prices []float64, period int) []float64 {
 价格下穿布林带下轨，考虑买入
 价格上穿布林带上轨，考虑卖出
 */
-func CalculateBollinger(prices []float64, period int) (lowerBand, upperBand []float64) {
+func CalculateBollinger(prices []float64, period int) BollingerBand {
 	n := len(prices)
-	lowerBand = make([]float64, n)
-	upperBand = make([]float64, n)
-
-	var sum, sumSquares float64
-
-	for i := 0; i < period; i++ {
-		sum += prices[i]
-		sumSquares += prices[i] * prices[i]
-	}
+	lowerBand := make([]float64, n)
+	upperBand := make([]float64, n)
+	midBand := CalculateEMA(prices, period)
 
 	for i := period - 1; i < n; i++ {
-		if i >= period {
-			sum -= prices[i-period]
-			sumSquares -= prices[i-period] * prices[i-period]
-			sum += prices[i]
-			sumSquares += prices[i] * prices[i]
+		sum := 0.0
+		for j := i - period + 1; j <= i; j++ {
+			sum += prices[j]
 		}
-
 		mean := sum / float64(period)
-		variance := (sumSquares / float64(period)) - (mean * mean)
-		stddev := math.Sqrt(variance)
+
+		variance := 0.0
+		for j := i - period + 1; j <= i; j++ {
+			variance += (prices[j] - mean) * (prices[j] - mean)
+		}
+		stddev := math.Sqrt(variance / float64(period))
 
 		upperBand[i] = mean + 2*stddev
 		lowerBand[i] = mean - 2*stddev
 	}
 
-	return
+	return BollingerBand{
+		LowerBand: lowerBand,
+		MidBand:   midBand,
+		UpperBand: upperBand,
+	}
 }
 
 /*
@@ -329,25 +332,30 @@ func CalculateEMA(prices []float64, period int) []float64 {
 MACD线上穿Signal线 → 金叉，买入信号
 MACD线下穿Signal线 → 死叉，卖出信号
 */
-func CalculateMACD(prices []float64) (macdLine, signalLine, histogram []float64) {
+func CalculateMACD(prices []float64) MACD {
+	n := len(prices)
+	macdLine := make([]float64, n)
+	signalLine := make([]float64, n)
+	histogram := make([]float64, n)
+
 	ema12 := CalculateEMA(prices, 12)
 	ema26 := CalculateEMA(prices, 26)
 
-	n := len(prices)
-	macdLine = make([]float64, n)
 	for i := 0; i < n; i++ {
 		macdLine[i] = ema12[i] - ema26[i]
 	}
 
-	// Signal Line是MACD Line的9周期EMA
 	signalLine = CalculateEMA(macdLine, 9)
 
-	histogram = make([]float64, n)
 	for i := 0; i < n; i++ {
 		histogram[i] = macdLine[i] - signalLine[i]
 	}
 
-	return
+	return MACD{
+		MACDLine:   macdLine,
+		SignalLine: signalLine,
+		Histogram:  histogram,
+	}
 }
 
 /*

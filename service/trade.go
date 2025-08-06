@@ -1,5 +1,7 @@
 package service
 
+import "fmt"
+
 func BacktestTrades(se *ScoringEngine, threshold int) []Trade {
 	var trades []Trade
 	var position string
@@ -30,4 +32,27 @@ func BacktestTrades(se *ScoringEngine, threshold int) []Trade {
 		}
 	}
 	return trades
+}
+
+func PrintTradeStats(trades []Trade) {
+	totalPnL := 0.0
+	winCount := 0
+	lossCount := 0
+
+	fmt.Printf("\n ===== PrintTradeStats ===== \n\n")
+
+	for _, trade := range trades {
+		fmt.Printf("%s | %s @ %.2f | PnL: %.2f\n", trade.Date, trade.Signal, trade.Price, trade.PnL)
+		totalPnL += trade.PnL
+		if trade.PnL > 0 {
+			winCount++
+		} else if trade.PnL < 0 {
+			lossCount++
+		}
+	}
+
+	totalTrades := winCount + lossCount
+	fmt.Printf("\n总盈亏: %.2f\n", totalPnL)
+	fmt.Printf("胜率: %.2f%%\n", float64(winCount)/float64(totalTrades)*100)
+	fmt.Printf("总交易次数: %d\n", totalTrades)
 }

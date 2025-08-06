@@ -22,9 +22,36 @@ type Result struct {
 	TotalReturn   float64
 }
 
+/* Trading */
+
 type Trade struct {
 	Date   string
 	Signal string
 	Price  float64
 	PnL    float64
+}
+
+/* Indicator */
+
+type BollingerBand struct {
+	LowerBand []float64
+	MidBand   []float64
+	UpperBand []float64
+}
+
+type KDJValue struct {
+	K float64
+	D float64
+	J float64
+}
+
+type ARBR struct {
+	AR []float64
+	BR []float64
+}
+
+type MACD struct {
+	MACDLine   []float64
+	SignalLine []float64
+	Histogram  []float64
 }

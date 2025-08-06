@@ -1,12 +1,6 @@
 package service
 
-import (
-	"fmt"
-	"go.uber.org/zap"
-	"wolf_street/pkginit"
-)
-
-func StrategyRSIBollinger(candles []Candle) error {
+/*func StrategyRSIBollinger(candles []Candle) error {
 	prices := make([]float64, len(candles))
 	for i, c := range candles {
 		prices[i] = c.Close
@@ -62,3 +56,4 @@ func StrategyRSIBollinger(candles []Candle) error {
 
 	return nil
 }
+*/
