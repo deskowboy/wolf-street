@@ -1,6 +1,12 @@
 package service
 
-import "math"
+import (
+	"fmt"
+	"github.com/schollz/progressbar/v3"
+	"math"
+	"runtime"
+	"time"
+)
 
 func CalculateKeltnerChannel(highs, lows, closes []float64, period int) KC {
 	n := len(closes)
@@ -149,6 +155,8 @@ KDJ 信号 :
 低于 20：股价低位，可能反弹。
 */
 func CalculateKDJ(highs, lows, closes []float64, period int) []KDJValue {
+	bar := NewTaggedProgressBar(len(closes), period)
+
 	n := len(closes)
 	kdj := make([]KDJValue, n)
 
@@ -164,6 +172,9 @@ func CalculateKDJ(highs, lows, closes []float64, period int) []KDJValue {
 			if highs[j] > high {
 				high = highs[j]
 			}
+
+			bar.Add(1)
+			time.Sleep(10 * time.Millisecond)
 		}
 
 		if high != low {
@@ -174,6 +185,8 @@ func CalculateKDJ(highs, lows, closes []float64, period int) []KDJValue {
 			kdj[i] = KDJValue{K: k, D: d, J: jValue}
 		}
 	}
+
+	bar.Finish()
 	return kdj
 }
 
@@ -186,6 +199,8 @@ SAR 点“翻转”位置时 = 趋势可能反转：
 价格上方变下方：买入信号。
 */
 func CalculateSAR(highs, lows []float64, accelerationFactor float64, maxAccelerationFactor float64) []float64 {
+	bar := NewTaggedProgressBar(len(highs), len(lows))
+
 	n := len(highs)
 	sar := make([]float64, n)
 
@@ -222,7 +237,12 @@ func CalculateSAR(highs, lows []float64, accelerationFactor float64, maxAccelera
 				}
 			}
 		}
+
+		bar.Add(1)
+		time.Sleep(10 * time.Millisecond)
 	}
+
+	bar.Finish()
 	return sar
 }
 
@@ -231,6 +251,8 @@ RSI < 30 → 超卖区，考虑买入
 RSI > 70 → 超买区，考虑卖出
 */
 func CalculateRSI(prices []float64, period int) []float64 {
+	bar := NewTaggedProgressBar(len(prices), period)
+
 	rsi := make([]float64, len(prices))
 	var gainSum, lossSum float64
 
@@ -241,6 +263,9 @@ func CalculateRSI(prices []float64, period int) []float64 {
 		} else {
 			lossSum -= change
 		}
+
+		bar.Add(1)
+		time.Sleep(10 * time.Millisecond)
 	}
 
 	avgGain := gainSum / float64(period)
@@ -275,6 +300,8 @@ func CalculateRSI(prices []float64, period int) []float64 {
 	for i := 0; i < period; i++ {
 		rsi[i] = 0
 	}
+
+	bar.Finish()
 	return rsi
 }
 
@@ -283,6 +310,8 @@ func CalculateRSI(prices []float64, period int) []float64 {
 价格上穿布林带上轨，考虑卖出
 */
 func CalculateBollinger(prices []float64, period int) BollingerBand {
+	bar := NewTaggedProgressBar(len(prices), period)
+
 	n := len(prices)
 	lowerBand := make([]float64, n)
 	upperBand := make([]float64, n)
@@ -303,8 +332,12 @@ func CalculateBollinger(prices []float64, period int) BollingerBand {
 
 		upperBand[i] = mean + 2*stddev
 		lowerBand[i] = mean - 2*stddev
+
+		bar.Add(1)
+		time.Sleep(10 * time.Millisecond)
 	}
 
+	bar.Finish()
 	return BollingerBand{
 		LowerBand: lowerBand,
 		MidBand:   midBand,
@@ -317,6 +350,8 @@ func CalculateBollinger(prices []float64, period int) BollingerBand {
 短期EMA下穿长期EMA → 死亡交叉，卖出信号
 */
 func CalculateEMA(prices []float64, period int) []float64 {
+	bar := NewTaggedProgressBar(len(prices), period)
+
 	ema := make([]float64, len(prices))
 	k := 2.0 / (float64(period) + 1.0)
 
@@ -329,8 +364,12 @@ func CalculateEMA(prices []float64, period int) []float64 {
 
 	for i := period; i < len(prices); i++ {
 		ema[i] = prices[i]*k + ema[i-1]*(1-k)
+
+		bar.Add(1)
+		time.Sleep(10 * time.Millisecond)
 	}
 
+	bar.Finish()
 	return ema
 }
 
@@ -339,6 +378,8 @@ MACD线上穿Signal线 → 金叉，买入信号
 MACD线下穿Signal线 → 死叉，卖出信号
 */
 func CalculateMACD(prices []float64) MACD {
+	bar := NewTaggedProgressBar(len(prices), len(prices))
+
 	n := len(prices)
 	macdLine := make([]float64, n)
 	signalLine := make([]float64, n)
@@ -349,6 +390,9 @@ func CalculateMACD(prices []float64) MACD {
 
 	for i := 0; i < n; i++ {
 		macdLine[i] = ema12[i] - ema26[i]
+
+		bar.Add(1)
+		time.Sleep(10 * time.Millisecond)
 	}
 
 	signalLine = CalculateEMA(macdLine, 9)
@@ -357,6 +401,7 @@ func CalculateMACD(prices []float64) MACD {
 		histogram[i] = macdLine[i] - signalLine[i]
 	}
 
+	bar.Finish()
 	return MACD{
 		MACDLine:   macdLine,
 		SignalLine: signalLine,
@@ -369,6 +414,8 @@ ATR上升，信号可靠性增强 (不直接作为买卖信号)
 ATR下降，信号减弱 (辅助判断信号有效性)
 */
 func CalculateATR(highs, lows, closes []float64, period int) []float64 {
+	bar := NewTaggedProgressBar(len(closes), period)
+
 	atr := make([]float64, len(closes))
 	trs := make([]float64, len(closes))
 
@@ -378,19 +425,29 @@ func CalculateATR(highs, lows, closes []float64, period int) []float64 {
 		lowClose := math.Abs(lows[i] - closes[i-1])
 
 		trs[i] = math.Max(highLow, math.Max(highClose, lowClose))
+
+		bar.Add(1)
+		time.Sleep(10 * time.Millisecond)
 	}
 
 	// 初始ATR用SMA
 	sum := 0.0
 	for i := 1; i <= period; i++ {
 		sum += trs[i]
+
+		bar.Add(1)
+		time.Sleep(10 * time.Millisecond)
 	}
 	atr[period] = sum / float64(period)
 
 	for i := period + 1; i < len(closes); i++ {
 		atr[i] = (atr[i-1]*(float64(period-1)) + trs[i]) / float64(period)
+
+		bar.Add(1)
+		time.Sleep(10 * time.Millisecond)
 	}
 
+	bar.Finish()
 	return atr
 }
 
@@ -399,6 +456,8 @@ StochRSI < 0.2 → 超卖 → 可能买入
 StochRSI > 0.8 → 超买 → 可能卖出
 */
 func CalculateStochRSI(prices []float64, period int) []float64 {
+	bar := NewTaggedProgressBar(len(prices), period)
+
 	rsi := CalculateRSI(prices, period)
 	stochRsi := make([]float64, len(rsi))
 
@@ -418,7 +477,12 @@ func CalculateStochRSI(prices []float64, period int) []float64 {
 		} else {
 			stochRsi[i] = (rsi[i] - lowest) / (highest - lowest)
 		}
+
+		bar.Add(1)
+		time.Sleep(10 * time.Millisecond)
 	}
+
+	bar.Finish()
 	return stochRsi
 }
 
@@ -458,4 +522,26 @@ func CalculateCCI(highs, lows, closes []float64, period int) []float64 {
 	}
 
 	return cci
+}
+
+func NewTaggedProgressBar(n int, tag int) *progressbar.ProgressBar {
+	fmt.Println("")
+
+	pc, _, _, _ := runtime.Caller(1) // use Caller(1) to get the calling function's name
+	funcName := runtime.FuncForPC(pc).Name()
+
+	bar := progressbar.NewOptions(n,
+		progressbar.OptionSetDescription(fmt.Sprintf("%s | Period:%d", funcName, tag)),
+		progressbar.OptionShowCount(),
+		progressbar.OptionSetWidth(100),
+		progressbar.OptionSetTheme(progressbar.Theme{
+			Saucer:        "#",
+			SaucerHead:    ">",
+			SaucerPadding: "-",
+			BarStart:      "[",
+			BarEnd:        "]",
+		}),
+	)
+
+	return bar
 }
