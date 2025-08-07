@@ -9,6 +9,8 @@ import (
 )
 
 func CalculateKeltnerChannel(highs, lows, closes []float64, period int) KC {
+	bar := NewTaggedProgressBar(len(highs), period)
+
 	n := len(closes)
 	upperBand := make([]float64, n)
 	middleBand := CalculateEMA(closes, period)
@@ -18,8 +20,12 @@ func CalculateKeltnerChannel(highs, lows, closes []float64, period int) KC {
 	for i := 0; i < n; i++ {
 		upperBand[i] = middleBand[i] + 2*atr[i]
 		lowerBand[i] = middleBand[i] - 2*atr[i]
+
+		bar.Add(1)
+		time.Sleep(10 * time.Millisecond)
 	}
 
+	bar.Finish()
 	return KC{
 		UpperBand:  upperBand,
 		MiddleBand: middleBand,
@@ -28,6 +34,8 @@ func CalculateKeltnerChannel(highs, lows, closes []float64, period int) KC {
 }
 
 func CalculateTDSequential(prices []float64) []int {
+	bar := NewTaggedProgressBar(len(prices), len(prices))
+
 	n := len(prices)
 	td := make([]int, n)
 	countUp := 0
@@ -52,7 +60,12 @@ func CalculateTDSequential(prices []float64) []int {
 			td[i] = -9
 			countDown = 0
 		}
+
+		bar.Add(1)
+		time.Sleep(10 * time.Millisecond)
 	}
+
+	bar.Finish()
 	return td
 }
 
@@ -60,6 +73,8 @@ func CalculateTDSequential(prices []float64) []int {
 VWAP：价格上穿/下穿 VWAP 判定强弱势
 */
 func CalculateVWAP(candles []Candle) []float64 {
+	bar := NewTaggedProgressBar(len(candles), len(candles))
+
 	n := len(candles)
 	vwap := make([]float64, n)
 	var cumulativePV, cumulativeVolume float64
@@ -70,7 +85,12 @@ func CalculateVWAP(candles []Candle) []float64 {
 		cumulativePV += price * volume
 		cumulativeVolume += volume
 		vwap[i] = cumulativePV / cumulativeVolume
+
+		bar.Add(1)
+		time.Sleep(10 * time.Millisecond)
 	}
+
+	bar.Finish()
 	return vwap
 }
 
@@ -79,6 +99,8 @@ ARBR > 120 判定为极强多头，
 ARBR < 80 判定为极弱空头
 */
 func CalculateARBR(candles []Candle) ARBR {
+	bar := NewTaggedProgressBar(len(candles), len(candles))
+
 	n := len(candles)
 	AR := make([]float64, n)
 	BR := make([]float64, n)
@@ -94,8 +116,12 @@ func CalculateARBR(candles []Candle) ARBR {
 		if LC != 0 {
 			BR[i] = HC / LC * 100
 		}
+
+		bar.Add(1)
+		time.Sleep(10 * time.Millisecond)
 	}
 
+	bar.Finish()
 	return ARBR{
 		AR: AR,
 		BR: BR,
@@ -107,6 +133,8 @@ CR：> 150 强多头确认
 CR：< 100 偏空头确认
 */
 func CalculateCR(candles []Candle, period int) []float64 {
+	bar := NewTaggedProgressBar(len(candles), period)
+
 	n := len(candles)
 	cr := make([]float64, n)
 
@@ -121,7 +149,12 @@ func CalculateCR(candles []Candle, period int) []float64 {
 		if LMP != 0 {
 			cr[i] = HMP / LMP * 100
 		}
+
+		bar.Add(1)
+		time.Sleep(10 * time.Millisecond)
 	}
+
+	bar.Finish()
 	return cr
 }
 
@@ -130,6 +163,8 @@ func CalculateCR(candles []Candle, period int) []float64 {
 Ichimoku：价格上穿/下穿基准线判定偏多/偏空
 */
 func CalculateIchimokuBaseLine(highs, lows []float64, period int) []float64 {
+	bar := NewTaggedProgressBar(len(highs), period)
+
 	n := len(highs)
 	baseLine := make([]float64, n)
 	for i := period - 1; i < n; i++ {
@@ -144,7 +179,12 @@ func CalculateIchimokuBaseLine(highs, lows []float64, period int) []float64 {
 			}
 		}
 		baseLine[i] = (highest + lowest) / 2
+
+		bar.Add(1)
+		time.Sleep(10 * time.Millisecond)
 	}
+
+	bar.Finish()
 	return baseLine
 }
 
@@ -491,6 +531,8 @@ CCI > +100 → 多头强势（买入）
 CCI < -100 → 空头强势（卖出）
 */
 func CalculateCCI(highs, lows, closes []float64, period int) []float64 {
+	bar := NewTaggedProgressBar(len(closes), period)
+
 	n := len(closes)
 	cci := make([]float64, n)
 
@@ -519,8 +561,12 @@ func CalculateCCI(highs, lows, closes []float64, period int) []float64 {
 		} else {
 			cci[i] = 0
 		}
+
+		bar.Add(1)
+		time.Sleep(10 * time.Millisecond)
 	}
 
+	bar.Finish()
 	return cci
 }
 
