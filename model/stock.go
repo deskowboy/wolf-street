@@ -10,6 +10,12 @@ type Stock struct {
 func GetAllStock() ([]Stock, error) {
 	var Stocks = []Stock{
 		{
+			Name:        "AuMas Resources Bhd",
+			Code:        "AUMAS",
+			Number:      "0098",
+			Description: "Investment holding company & segments include Aquaculture operations",
+		},
+		{
 			Name:        "MN Holdings Bhd",
 			Code:        "MNHLDG",
 			Number:      "0245",

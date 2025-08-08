@@ -1,10 +1,7 @@
 package service
 
 import (
-	"fmt"
-	"github.com/schollz/progressbar/v3"
 	"math"
-	"runtime"
 	"time"
 )
 
@@ -22,7 +19,7 @@ func CalculateKeltnerChannel(highs, lows, closes []float64, period int) KC {
 		lowerBand[i] = middleBand[i] - 2*atr[i]
 
 		bar.Add(1)
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(6 * time.Millisecond)
 	}
 
 	bar.Finish()
@@ -62,7 +59,7 @@ func CalculateTDSequential(prices []float64) []int {
 		}
 
 		bar.Add(1)
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(6 * time.Millisecond)
 	}
 
 	bar.Finish()
@@ -87,7 +84,7 @@ func CalculateVWAP(candles []Candle) []float64 {
 		vwap[i] = cumulativePV / cumulativeVolume
 
 		bar.Add(1)
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(6 * time.Millisecond)
 	}
 
 	bar.Finish()
@@ -118,7 +115,7 @@ func CalculateARBR(candles []Candle) ARBR {
 		}
 
 		bar.Add(1)
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(6 * time.Millisecond)
 	}
 
 	bar.Finish()
@@ -151,7 +148,7 @@ func CalculateCR(candles []Candle, period int) []float64 {
 		}
 
 		bar.Add(1)
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(6 * time.Millisecond)
 	}
 
 	bar.Finish()
@@ -181,7 +178,7 @@ func CalculateIchimokuBaseLine(highs, lows []float64, period int) []float64 {
 		baseLine[i] = (highest + lowest) / 2
 
 		bar.Add(1)
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(6 * time.Millisecond)
 	}
 
 	bar.Finish()
@@ -214,7 +211,7 @@ func CalculateKDJ(highs, lows, closes []float64, period int) []KDJValue {
 			}
 
 			bar.Add(1)
-			time.Sleep(10 * time.Millisecond)
+			time.Sleep(6 * time.Millisecond)
 		}
 
 		if high != low {
@@ -279,7 +276,7 @@ func CalculateSAR(highs, lows []float64, accelerationFactor float64, maxAccelera
 		}
 
 		bar.Add(1)
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(6 * time.Millisecond)
 	}
 
 	bar.Finish()
@@ -305,7 +302,7 @@ func CalculateRSI(prices []float64, period int) []float64 {
 		}
 
 		bar.Add(1)
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(6 * time.Millisecond)
 	}
 
 	avgGain := gainSum / float64(period)
@@ -374,7 +371,7 @@ func CalculateBollinger(prices []float64, period int) BollingerBand {
 		lowerBand[i] = mean - 2*stddev
 
 		bar.Add(1)
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(6 * time.Millisecond)
 	}
 
 	bar.Finish()
@@ -406,7 +403,7 @@ func CalculateEMA(prices []float64, period int) []float64 {
 		ema[i] = prices[i]*k + ema[i-1]*(1-k)
 
 		bar.Add(1)
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(6 * time.Millisecond)
 	}
 
 	bar.Finish()
@@ -432,7 +429,7 @@ func CalculateMACD(prices []float64) MACD {
 		macdLine[i] = ema12[i] - ema26[i]
 
 		bar.Add(1)
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(6 * time.Millisecond)
 	}
 
 	signalLine = CalculateEMA(macdLine, 9)
@@ -467,7 +464,7 @@ func CalculateATR(highs, lows, closes []float64, period int) []float64 {
 		trs[i] = math.Max(highLow, math.Max(highClose, lowClose))
 
 		bar.Add(1)
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(6 * time.Millisecond)
 	}
 
 	// 初始ATR用SMA
@@ -476,7 +473,7 @@ func CalculateATR(highs, lows, closes []float64, period int) []float64 {
 		sum += trs[i]
 
 		bar.Add(1)
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(6 * time.Millisecond)
 	}
 	atr[period] = sum / float64(period)
 
@@ -484,7 +481,7 @@ func CalculateATR(highs, lows, closes []float64, period int) []float64 {
 		atr[i] = (atr[i-1]*(float64(period-1)) + trs[i]) / float64(period)
 
 		bar.Add(1)
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(6 * time.Millisecond)
 	}
 
 	bar.Finish()
@@ -519,7 +516,7 @@ func CalculateStochRSI(prices []float64, period int) []float64 {
 		}
 
 		bar.Add(1)
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(6 * time.Millisecond)
 	}
 
 	bar.Finish()
@@ -563,31 +560,9 @@ func CalculateCCI(highs, lows, closes []float64, period int) []float64 {
 		}
 
 		bar.Add(1)
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(6 * time.Millisecond)
 	}
 
 	bar.Finish()
 	return cci
-}
-
-func NewTaggedProgressBar(n int, tag int) *progressbar.ProgressBar {
-	fmt.Println("")
-
-	pc, _, _, _ := runtime.Caller(1) // use Caller(1) to get the calling function's name
-	funcName := runtime.FuncForPC(pc).Name()
-
-	bar := progressbar.NewOptions(n,
-		progressbar.OptionSetDescription(fmt.Sprintf("%s | Period:%d", funcName, tag)),
-		progressbar.OptionShowCount(),
-		progressbar.OptionSetWidth(100),
-		progressbar.OptionSetTheme(progressbar.Theme{
-			Saucer:        "#",
-			SaucerHead:    ">",
-			SaucerPadding: "-",
-			BarStart:      "[",
-			BarEnd:        "]",
-		}),
-	)
-
-	return bar
 }

@@ -60,7 +60,7 @@ func StrategyScoringEngine(candles []Candle) error {
 		// 省略其他指标初始化
 	}
 
-	fmt.Println(" \n\n Scoring Engine Result: \n ")
+	fmt.Println(" \n\n ======= Scoring Engine Result: ======= \n ")
 	for i := 0; i < len(prices); i++ {
 		score, signals := se.Score(i)
 		if i < 10 {
